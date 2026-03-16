@@ -1772,10 +1772,19 @@ struct MenuBarView: View {
                 }
             }
 
-            Button("Check again") {
+            Button {
                 manager.memoryManager.refresh()
+            } label: {
+                HStack(spacing: 4) {
+                    if manager.memoryManager.isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+                    Text(manager.memoryManager.isLoading ? "Checking..." : "Check again")
+                }
             }
             .font(.system(size: 11))
+            .disabled(manager.memoryManager.isLoading)
         }
         .frame(maxWidth: .infinity, minHeight: 200)
         .padding(.vertical, 8)

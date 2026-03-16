@@ -60,11 +60,13 @@ class MemoryManager: ObservableObject {
     // MARK: - Load data
 
     func refresh() {
+        isLoading = true
         checkInstallation()
         guard isInstalled else {
             memories = []
             stats = .empty
             projects = []
+            isLoading = false
             return
         }
 
