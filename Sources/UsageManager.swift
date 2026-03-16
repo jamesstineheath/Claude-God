@@ -568,6 +568,10 @@ class UsageManager: ObservableObject {
             self?.objectWillChange.send()
         }.store(in: &cancellables)
 
+        memoryManager.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }.store(in: &cancellables)
+
         auth.loadCredentials()
         auth.startWatchingCredentials()
 
