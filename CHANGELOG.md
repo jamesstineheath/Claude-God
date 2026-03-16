@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.17.1] - 2026-03-16
+
+### Fixed
+- Stop refreshing OAuth tokens — reload credentials from disk instead. The single-use refresh token was invalidating Claude Code's copy, forcing repeated `claude login`.
+
 ## [2.17.0] - 2026-03-16
 
 ### Added
