@@ -2,7 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.19.4] - 2026-04-01
+## [2.20.0] - 2026-04-02
+
+### Added
+- Peak / Off-peak indicator in usage view — shows whether you're in peak hours (Mon–Fri 7am–5pm PT) with countdown to next transition
 
 ### Fixed
 - Menu bar timer now shows session reset instead of weekly reset when usage is at 0%

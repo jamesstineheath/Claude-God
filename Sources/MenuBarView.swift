@@ -581,6 +581,31 @@ struct MenuBarView: View {
                 }
             }
 
+            // Peak / Off-peak indicator
+            HStack(spacing: 6) {
+                Image(systemName: manager.isPeakHours ? "sun.max.fill" : "moon.stars.fill")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(manager.isPeakHours ? .orange : .indigo)
+                Text(manager.isPeakHours ? "Peak hours" : "Off-peak")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(manager.isPeakHours ? .orange : .indigo)
+                Spacer()
+                Text(manager.peakTransitionDescription)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                    .strokeBorder((manager.isPeakHours ? Color.orange : Color.indigo).opacity(0.15), lineWidth: 1)
+                    .background(
+                        RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                            .fill((manager.isPeakHours ? Color.orange : Color.indigo).opacity(0.05))
+                    )
+            )
+            .help("Peak hours: Mon–Fri 7am–5pm PT (US Pacific)")
+
             // Live session cost
             if manager.isSessionActive && manager.activeSessionCost > 0 {
                 HStack(spacing: 6) {
@@ -763,6 +788,20 @@ struct MenuBarView: View {
                     .font(.system(size: 11, weight: .semibold, design: .monospaced))
                     .foregroundColor(.secondary)
             }
+
+            HStack {
+                Image(systemName: manager.isPeakHours ? "sun.max.fill" : "moon.stars.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(manager.isPeakHours ? .orange : .indigo)
+                Text(manager.isPeakHours ? "Peak" : "Off-peak")
+                    .font(.system(size: 11))
+                    .foregroundColor(manager.isPeakHours ? .orange : .indigo)
+                Spacer()
+                Text(manager.peakTransitionDescription)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.secondary)
+            }
+            .help("Peak hours: Mon–Fri 7am–5pm PT")
 
             if let lastRefresh = manager.lastRefresh {
                 HStack {

@@ -406,6 +406,89 @@ class UsageManager: ObservableObject {
             .min()
     }
 
+    // MARK: - Peak / Off-peak detection
+
+    /// Peak hours: weekdays 7am–5pm US Pacific (when most US users are active)
+    private static let peakTimezone = TimeZone(identifier: "America/Los_Angeles")!
+    private static let peakStartHour = 7
+    private static let peakEndHour = 17
+
+    var isPeakHours: Bool {
+        let cal = Calendar.current
+        var pacificCal = cal
+        pacificCal.timeZone = Self.peakTimezone
+        let now = Date()
+        let weekday = pacificCal.component(.weekday, from: now)
+        let hour = pacificCal.component(.hour, from: now)
+        let isWeekday = weekday >= 2 && weekday <= 6 // Mon–Fri
+        return isWeekday && hour >= Self.peakStartHour && hour < Self.peakEndHour
+    }
+
+    /// Time until next peak/off-peak transition
+    var peakTransitionDescription: String {
+        let cal = Calendar.current
+        var pacificCal = cal
+        pacificCal.timeZone = Self.peakTimezone
+        let now = Date()
+
+        if isPeakHours {
+            // Currently peak → find when off-peak starts (5pm PT today)
+            var comps = pacificCal.dateComponents([.year, .month, .day], from: now)
+            comps.hour = Self.peakEndHour
+            comps.minute = 0
+            comps.second = 0
+            comps.timeZone = Self.peakTimezone
+            if let offPeakStart = pacificCal.date(from: comps) {
+                let remaining = offPeakStart.timeIntervalSince(now)
+                let hours = Int(remaining) / 3600
+                let minutes = (Int(remaining) % 3600) / 60
+                return hours > 0 ? "Off-peak in \(hours)h\(String(format: "%02d", minutes))m" : "Off-peak in \(minutes)m"
+            }
+        } else {
+            // Currently off-peak → find next peak start
+            let weekday = pacificCal.component(.weekday, from: now)
+            let hour = pacificCal.component(.hour, from: now)
+
+            var daysUntilPeak = 0
+            if weekday >= 2 && weekday <= 6 && hour < Self.peakStartHour {
+                // Weekday before peak → peak starts today
+                daysUntilPeak = 0
+            } else {
+                // After peak or weekend → find next weekday
+                let currentWeekday = weekday
+                if currentWeekday == 7 { // Saturday
+                    daysUntilPeak = 2
+                } else if currentWeekday == 1 { // Sunday
+                    daysUntilPeak = 1
+                } else {
+                    // Weekday after 5pm → next weekday morning
+                    daysUntilPeak = currentWeekday == 6 ? 3 : 1 // Friday → Monday, else tomorrow
+                }
+            }
+
+            var comps = pacificCal.dateComponents([.year, .month, .day], from: now)
+            comps.hour = Self.peakStartHour
+            comps.minute = 0
+            comps.second = 0
+            comps.timeZone = Self.peakTimezone
+            if let todayPeak = pacificCal.date(from: comps) {
+                let nextPeak = pacificCal.date(byAdding: .day, value: daysUntilPeak, to: todayPeak) ?? todayPeak
+                let remaining = nextPeak.timeIntervalSince(now)
+                if remaining > 0 {
+                    let hours = Int(remaining) / 3600
+                    let minutes = (Int(remaining) % 3600) / 60
+                    if hours >= 24 {
+                        let days = hours / 24
+                        let h = hours % 24
+                        return "Peak in \(days)d \(h)h"
+                    }
+                    return hours > 0 ? "Peak in \(hours)h\(String(format: "%02d", minutes))m" : "Peak in \(minutes)m"
+                }
+            }
+        }
+        return ""
+    }
+
     // MARK: - Burn rate prediction
 
     var burnRatePrediction: String? {
