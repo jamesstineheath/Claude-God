@@ -1185,21 +1185,16 @@ class UsageManager: ObservableObject {
                                 }
                             }
                         }
-                    } else if !self.quotas.isEmpty {
-                        let cooldown = min(retryAfterValue > 0 ? retryAfterValue : 30.0, 60.0)
-                        self.finishLoading()
-                        self.rateLimitedUntil = Date().addingTimeInterval(cooldown)
-                        Log.info("Rate limited (429), keeping existing data, retry in \(Int(cooldown))s")
-                    } else if retryCount < Self.maxRetries {
-                        let delay = 5 * pow(2.0, Double(retryCount))
-                        Log.info("Rate limited (429), retrying in \(Int(delay))s (attempt \(retryCount + 1)/\(Self.maxRetries))...")
-                        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                            self?.fetchUsage(retryCount: retryCount + 1)
-                        }
                     } else {
-                        self.finishLoading(error: "Rate limited — run `claude login` to refresh")
-                        self.rateLimitedUntil = Date().addingTimeInterval(60)
-                        Log.info("Rate limited (429), all retries exhausted, will auto-retry in 60s")
+                        let cooldown = retryAfterValue > 0 ? retryAfterValue : 30.0
+                        self.rateLimitedUntil = Date().addingTimeInterval(cooldown)
+                        if !self.quotas.isEmpty {
+                            self.finishLoading()
+                            Log.info("Rate limited (429), keeping existing data, retry in \(Int(cooldown))s")
+                        } else {
+                            self.finishLoading(error: "Rate limited — retrying in \(Int(cooldown))s")
+                            Log.info("Rate limited (429), no data yet, will auto-retry in \(Int(cooldown))s")
+                        }
                     }
 
                 default:
