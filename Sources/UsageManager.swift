@@ -986,6 +986,7 @@ class UsageManager: ObservableObject {
     /// Manual refresh — always clears rate limit cooldown
     func refresh() {
         rateLimitedUntil = nil
+        consecutive429Count = 0
         refreshInternal()
     }
 
@@ -1207,7 +1208,7 @@ class UsageManager: ObservableObject {
                         // When missing/zero, escalate: 30s, 2min, 10min, 30min, 60min, 120min (cap)
                         let cooldown: Double
                         if retryAfterValue > 0 {
-                            cooldown = retryAfterValue
+                            cooldown = min(retryAfterValue, 7200)
                         } else {
                             let steps: [Double] = [30, 120, 600, 1800, 3600, 7200]
                             let index = min(self.consecutive429Count - 1, steps.count - 1)
