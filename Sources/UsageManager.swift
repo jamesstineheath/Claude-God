@@ -698,7 +698,7 @@ class UsageManager: ObservableObject {
         auth.objectWillChange.sink { [weak self] _ in
             DispatchQueue.main.async {
                 guard let self else { return }
-                if self.isAuthenticated && !self.isLoading && (self.quotas.isEmpty || self.errorMessage != nil) {
+                if self.isAuthenticated && !self.auth.tokenExpired && !self.isLoading && (self.quotas.isEmpty || self.errorMessage != nil) {
                     self.showSettings = false
                     self.refresh()
                 }
