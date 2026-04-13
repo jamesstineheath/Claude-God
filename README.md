@@ -164,6 +164,9 @@ git tag v2.8.0 && git push origin v2.8.0
 
 ## Changelog
 
+### v2.20.3
+- **Fixed**: Respect `Retry-After` header on 429, progressive backoff, token expiry pre-flight, Keychain fallback for credentials
+
 ### v2.20.2
 - **Fixed**: App no longer gets stuck on "Rate limited" screen after `claude login` ([#5](https://github.com/Lcharvol/Claude-God/issues/5))
 - **Fixed**: Credential changes now trigger auto-refresh even when an error is displayed

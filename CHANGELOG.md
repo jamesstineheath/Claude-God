@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.20.3] - 2026-04-13
+
+### Fixed
+- Respect server `Retry-After` header on 429 instead of capping to 60s — stops hammering the API during long rate limits
+- Progressive backoff when no `Retry-After` header: 30s → 2min → 10min → 30min → 1h → 2h cap
+- Pre-flight token expiry check avoids doomed API calls with expired tokens
+- Credential reload now falls back to Keychain when `.credentials.json` is missing (macOS Claude Code stores credentials in Keychain only)
+- Cap server-provided `Retry-After` at 2h to protect against malformed headers
+- Updated all user-facing messages from `claude login` to `claude auth login`
+
 ## [2.20.2] - 2026-04-08
 
 ### Fixed
