@@ -3440,8 +3440,15 @@ struct MenuBarView: View {
     private func relativeResetTime(_ date: Date) -> String {
         let remaining = date.timeIntervalSinceNow
         guard remaining > 0 else { return "now" }
-        let hours = Int(remaining) / 3600
-        let minutes = (Int(remaining) % 3600) / 60
+        let totalMinutes = Int(remaining) / 60
+        let minutes = totalMinutes % 60
+        let totalHours = totalMinutes / 60
+        let hours = totalHours % 24
+        let days = totalHours / 24
+        if days > 0 {
+            if hours > 0 { return "in \(days)d \(hours)h" }
+            return "in \(days)d"
+        }
         if hours > 0 { return "in \(hours)h \(minutes)m" }
         return "in \(minutes)m"
     }
