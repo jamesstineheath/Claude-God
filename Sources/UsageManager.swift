@@ -602,6 +602,7 @@ class UsageManager: ObservableObject {
     private var countdownTimer: AnyCancellable?
     private var autoRefreshTimer: AnyCancellable?
     private var activeSessionTimer: AnyCancellable?
+    private var reconnectPollTimer: AnyCancellable?
     private var cancellables = Set<AnyCancellable>()
     private var isRefreshingToken = false
     private var tokenRefreshQueue: [(Bool) -> Void] = [] // queued callbacks for concurrent refresh requests
@@ -1043,14 +1044,37 @@ class UsageManager: ObservableObject {
             return
         }
 
-        Log.info("Terminal opened with claude auth login — watching for new credentials")
-        // File watcher will pick up new credentials automatically once claude auth login completes
-        // Reset reconnecting state after a timeout so the button re-enables
-        DispatchQueue.main.asyncAfter(deadline: .now() + 120) { [weak self] in
-            guard let self, self.isAutoReconnecting else { return }
-            self.isAutoReconnecting = false
-            if !self.auth.tokenExpired { self.refresh() }
-        }
+        Log.info("Terminal opened with claude auth login — polling for new credentials every 5s")
+        // claude auth login writes credentials to Keychain, not back to the file,
+        // so the file watcher will NOT fire. Poll reloadCredentials() instead.
+        startReconnectPolling()
+    }
+
+    private func startReconnectPolling() {
+        reconnectPollTimer?.cancel()
+        var elapsed = 0
+        reconnectPollTimer = Timer.publish(every: 5, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                guard let self, self.isAutoReconnecting else { return }
+                elapsed += 5
+                self.auth.reloadCredentials { [weak self] _ in
+                    guard let self else { return }
+                    if !self.auth.tokenExpired {
+                        Log.info("Auto-reconnect: fresh credentials detected after \(elapsed)s, resuming")
+                        self.reconnectPollTimer?.cancel()
+                        self.reconnectPollTimer = nil
+                        self.isAutoReconnecting = false
+                        self.refresh()
+                    } else if elapsed >= 120 {
+                        Log.warn("Auto-reconnect: timed out (120s) waiting for credentials")
+                        self.reconnectPollTimer?.cancel()
+                        self.reconnectPollTimer = nil
+                        self.isAutoReconnecting = false
+                        self.errorMessage = "Session expired — run `claude auth login` in Terminal"
+                    }
+                }
+            }
     }
 
     // MARK: - Actions
