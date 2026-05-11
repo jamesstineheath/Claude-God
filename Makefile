@@ -4,7 +4,13 @@
 generate:
 	xcodegen generate
 
-# Build the app in Release mode
+# Build the app in Release mode.
+# The post-build `codesign --force --sign - --deep` call re-applies an ad-hoc
+# signature to the whole bundle (including the Widget extension). Without it,
+# incremental builds can leave stale CodeResources artifacts that don't match
+# the actual bundle contents, causing macOS to refuse to launch the app with
+# `_LSOpenURLsWithCompletionHandler() failed with error -600`. This is a
+# personal-fork addition; upstream uses GitHub Actions to ship a real signature.
 build: generate
 	xcodebuild \
 		-project ClaudeGod.xcodeproj \
@@ -14,6 +20,8 @@ build: generate
 		CODE_SIGN_IDENTITY="-" \
 		CODE_SIGNING_REQUIRED=NO \
 		CODE_SIGNING_ALLOWED=NO
+	codesign --force --sign - --deep \
+		"build/Build/Products/Release/Claude God.app"
 
 # Open in Xcode
 open: generate
