@@ -851,7 +851,8 @@ class UsageManager: ObservableObject {
         }
 
         refreshStats()
-        checkForUpdates()
+        // Auto-update check disabled in this fork — we control update cadence via `git pull && make build`.
+        // checkForUpdates()
     }
 
     // MARK: - Session stats (single-pass optimization)
