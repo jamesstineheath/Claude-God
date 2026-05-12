@@ -268,7 +268,7 @@ class UsageManager: ObservableObject {
     @Published var todayStats = UsageStats()
     @Published var weekStats = UsageStats()
     @Published var monthStats = UsageStats()
-    enum Tab: Int { case usage, analytics, timeline, roi, extensions }
+    enum Tab: Int { case usage, analytics, timeline, roi, extensions, codex }
     @Published var selectedTab: Tab = .usage
     @Published var isLoadingStats = false
     @Published var sessionHistory: [SessionInfo] = []

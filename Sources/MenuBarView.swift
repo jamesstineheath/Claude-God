@@ -20,6 +20,10 @@ private enum Theme {
 
 struct MenuBarView: View {
     @ObservedObject var manager: UsageManager
+    /// Personal-fork addition: Codex sits alongside the main Claude manager.
+    /// Held as @StateObject so its lifetime matches MenuBarView; the refresh
+    /// timer inside CodexUsageManager handles periodic re-fetching.
+    @StateObject private var codexManager = CodexUsageManager()
     @State private var copiedFeedback = false
     @State private var extensionsSection: ExtensionsSection = .discover
     @State private var openPluginDetail: String?  // plugin id for detail view (e.g. "claude-mem@thedotmack")
@@ -56,6 +60,8 @@ struct MenuBarView: View {
                 Group {
                     if !manager.isAuthenticated || manager.showSettings {
                         settingsView
+                    } else if manager.selectedTab == .codex {
+                        codexUsageView
                     } else if manager.selectedTab == .analytics {
                         statsView
                     } else if manager.selectedTab == .timeline {
@@ -192,6 +198,11 @@ struct MenuBarView: View {
                 manager.pluginManager.refresh()
             }
             .keyboardShortcut("5", modifiers: .command)
+            SHTab(label: "Codex", isActive: manager.selectedTab == .codex) {
+                manager.selectedTab = .codex
+                codexManager.refresh()
+            }
+            .keyboardShortcut("6", modifiers: .command)
         }
         .padding(2)
         .background(
@@ -957,6 +968,197 @@ struct MenuBarView: View {
             )
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Next reset \(manager.timeUntilReset)")
+        }
+    }
+
+    // MARK: - Codex usage (personal-fork addition)
+
+    /// Side-by-side replica of the Claude usage panel, backed by CodexUsageManager.
+    /// Shows the same status-banner / quota-cards / burn-rate layout for OpenAI's
+    /// Codex CLI, fetched from chatgpt.com/backend-api/wham/usage.
+    private var codexUsageView: some View {
+        VStack(spacing: 8) {
+            // Header row: provider label + refresh state
+            HStack(spacing: 6) {
+                Image(systemName: "terminal.fill")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+                Text("OpenAI Codex")
+                    .font(.system(size: 12, weight: .semibold))
+                Spacer()
+                if codexManager.isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                } else if let last = codexManager.lastRefresh {
+                    Text(RelativeDateTimeFormatter().localizedString(for: last, relativeTo: Date()))
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+                Button(action: { codexManager.refresh() }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .help("Refresh Codex usage")
+            }
+
+            // Auth / error state
+            if let err = codexManager.errorMessage, codexManager.quotas.isEmpty {
+                VStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 24))
+                        .foregroundColor(.orange.opacity(0.6))
+                    Text(err)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+            } else if codexManager.quotas.isEmpty {
+                VStack(spacing: 8) {
+                    ProgressView()
+                    Text("Loading Codex usage…")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+            } else {
+                // Status banner (approaching / safe)
+                codexStatusBanner
+
+                // Quota cards
+                ForEach(codexManager.quotas) { quota in
+                    SHCard {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                HStack(spacing: 5) {
+                                    Image(systemName: quota.icon)
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundColor(.secondary)
+                                    Text(quota.label)
+                                        .font(.system(size: 12, weight: .medium))
+                                }
+                                Spacer()
+                                Text(formatUtilization(quota.utilization))
+                                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                                    .foregroundColor(quota.level.color)
+                            }
+                            GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    RoundedRectangle(cornerRadius: 3).fill(Theme.muted)
+                                    RoundedRectangle(cornerRadius: 3)
+                                        .fill(quota.level.color)
+                                        .frame(width: max(0, geo.size.width * CGFloat(min(quota.utilization, 100) / 100)))
+                                }
+                            }
+                            .frame(height: 6)
+                            if let resetsAt = quota.resetsAt {
+                                Text("Resets \(RelativeDateTimeFormatter().localizedString(for: resetsAt, relativeTo: Date()))")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                // Burn-rate block (mirrors Claude side)
+                let containerTint: Color = {
+                    if case .approaching = codexManager.sessionLimitProjection { return .orange }
+                    if case .approaching = codexManager.weeklyLimitProjection { return .orange }
+                    if case .safe = codexManager.sessionLimitProjection { return .green }
+                    if case .safe = codexManager.weeklyLimitProjection { return .green }
+                    return .secondary
+                }()
+                VStack(spacing: 4) {
+                    BurnRateProjectionRow(
+                        label: "Session",
+                        icon: "gauge.with.needle",
+                        projection: codexManager.sessionLimitProjection,
+                        compact: false
+                    )
+                    BurnRateProjectionRow(
+                        label: "Weekly",
+                        icon: "calendar.badge.exclamationmark",
+                        projection: codexManager.weeklyLimitProjection,
+                        compact: false
+                    )
+                    if let reason = codexManager.burnRateUnavailableReason {
+                        HStack(spacing: 6) {
+                            Image(systemName: "gauge.with.needle")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.secondary)
+                            Text(reason)
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
+                        }
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                        .strokeBorder(containerTint.opacity(0.15), lineWidth: 1)
+                        .background(
+                            RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                                .fill(containerTint.opacity(0.05))
+                        )
+                )
+            }
+        }
+    }
+
+    /// Codex equivalent of usageStatusBanner.
+    @ViewBuilder
+    private var codexStatusBanner: some View {
+        if let urgent = codexManager.mostUrgentApproaching {
+            HStack(spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Approaching Codex \(urgent.window) limit")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("At current rate, you'll hit it in \(urgent.label)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                    .fill(Color.red.opacity(0.85))
+            )
+        } else if codexManager.allWindowsSafe {
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Codex on track")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("No limit pending before the next reset")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                    .fill(Color.green.opacity(0.75))
+            )
+        } else {
+            EmptyView()
         }
     }
 
