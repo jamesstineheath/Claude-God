@@ -631,8 +631,68 @@ struct MenuBarView: View {
 
     // MARK: - Usage
 
+    /// Prominent top-of-popover banner that answers "am I about to hit a wall?"
+    /// at a glance. Three rendered states, mirroring LimitProjection:
+    /// - Any window approaching → red banner, with the most urgent window + ETA
+    /// - All computable windows safe → green "On track" banner
+    /// - Nothing computable yet → no banner (the burn-rate block still shows
+    ///   the "gathering data" explanation lower in the view)
+    @ViewBuilder
+    private var usageStatusBanner: some View {
+        if let urgent = manager.mostUrgentApproaching {
+            HStack(spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Approaching \(urgent.window) limit")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("At current rate, you'll hit it in \(urgent.label)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                    .fill(Color.red.opacity(0.85))
+            )
+        } else if manager.allWindowsSafe {
+            HStack(spacing: 10) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("On track")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("No limit pending before the next reset")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                    .fill(Color.green.opacity(0.75))
+            )
+        } else {
+            EmptyView()
+        }
+    }
+
     private var usageView: some View {
         VStack(spacing: 8) {
+            // Prominent status banner — personal-fork addition.
+            // Answers "am I about to hit a wall?" at a glance, before the user
+            // has to read individual quota rows or scroll to the burn-rate block.
+            usageStatusBanner
+
             ForEach(manager.quotas) { quota in
                 SHCard {
                     VStack(alignment: .leading, spacing: 8) {
@@ -3714,7 +3774,7 @@ struct BurnRateProjectionRow: View {
 
     var body: some View {
         switch projection {
-        case .approaching(let value):
+        case .approaching(let value, _):
             HStack(spacing: 6) {
                 if !compact {
                     Image(systemName: icon)

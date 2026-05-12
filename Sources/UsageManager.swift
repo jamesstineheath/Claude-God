@@ -600,11 +600,13 @@ class UsageManager: ObservableObject {
     // MARK: - Burn rate prediction (personal-fork refactor)
 
     /// Three-state classification of a quota's trajectory toward its limit.
-    /// - `.approaching` — at current rate, the limit hits before the window resets
+    /// - `.approaching` — at current rate, the limit hits before the window resets.
+    ///   `label` is the formatted time string; `secondsToLimit` is the raw value
+    ///   so callers can rank multiple approaching windows by urgency.
     /// - `.safe` — at current rate, the window resets first; no real pending wall
     /// - `.insufficientData` — not enough usage yet to project meaningfully
     enum LimitProjection {
-        case approaching(label: String)
+        case approaching(label: String, secondsToLimit: TimeInterval)
         case safe
         case insufficientData
     }
@@ -649,7 +651,42 @@ class UsageManager: ObservableObject {
         } else {
             label = "~\(minutes)m"
         }
-        return .approaching(label: label)
+        return .approaching(label: label, secondsToLimit: secondsToLimit)
+    }
+
+    /// The single most urgent approaching projection across all tracked windows
+    /// (session / weekly / design), ranked by raw time-to-limit. Used to drive
+    /// the prominent status banner in the popover.
+    var mostUrgentApproaching: (window: String, label: String, secondsToLimit: TimeInterval)? {
+        let candidates: [(String, LimitProjection)] = [
+            ("Session", sessionLimitProjection),
+            ("Weekly", weeklyLimitProjection),
+            ("Claude Design", designLimitProjection)
+        ]
+        let approaching = candidates.compactMap { name, proj -> (String, String, TimeInterval)? in
+            if case .approaching(let label, let secs) = proj {
+                return (name, label, secs)
+            }
+            return nil
+        }
+        return approaching.min(by: { $0.2 < $1.2 }).map {
+            (window: $0.0, label: $0.1, secondsToLimit: $0.2)
+        }
+    }
+
+    /// True when no window is approaching its limit AND at least one window
+    /// computed `.safe` (i.e., we have data and the math says we're fine).
+    var allWindowsSafe: Bool {
+        let projections = [sessionLimitProjection, weeklyLimitProjection, designLimitProjection]
+        let anyApproaching = projections.contains {
+            if case .approaching = $0 { return true }
+            return false
+        }
+        let anySafe = projections.contains {
+            if case .safe = $0 { return true }
+            return false
+        }
+        return !anyApproaching && anySafe
     }
 
     var sessionLimitProjection: LimitProjection {
@@ -683,12 +720,12 @@ class UsageManager: ObservableObject {
 
     // Legacy String? accessors derived from the enum, kept for any reference elsewhere.
     var burnRatePrediction: String? {
-        if case .approaching(let label) = sessionLimitProjection { return label }
+        if case .approaching(let label, _) = sessionLimitProjection { return label }
         return nil
     }
 
     var weeklyBurnRatePrediction: String? {
-        if case .approaching(let label) = weeklyLimitProjection { return label }
+        if case .approaching(let label, _) = weeklyLimitProjection { return label }
         return nil
     }
 
