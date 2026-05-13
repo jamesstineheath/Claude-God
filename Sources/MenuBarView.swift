@@ -790,8 +790,10 @@ struct MenuBarView: View {
         // would actually buy. Sonnet ≈ 60% of Opus per equivalent token, so
         // moving half of Opus work to Sonnet saves opusShare × 0.5 × 0.4 of
         // the total weekly burn.
+        // Threshold lowered (40 → 25) so the rec surfaces while there's still
+        // meaningful room to act, not only after Opus is already dominant.
         if let opusQuota = manager.quotas.first(where: { $0.label.contains("Opus") }),
-           opusQuota.utilization >= 40 {
+           opusQuota.utilization >= 25 {
             let agg = manager.weekStats.aggregatedModels
             let opusCost = agg.first(where: { $0.shortName == "Opus" })?.cost ?? 0
             let totalWeekCost = manager.weekStats.totalCost
@@ -844,7 +846,10 @@ struct MenuBarView: View {
             ))
         }
 
-        return Array(recs.prefix(3))
+        // Cap raised from 3 to 5 so a meaningful preventative rec (Sonnet
+        // routing, Codex shifting) isn't dropped when 2-3 alert recs are
+        // already firing. 5 rules total, so this effectively shows them all.
+        return Array(recs.prefix(5))
     }
 
     @ViewBuilder
