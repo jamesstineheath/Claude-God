@@ -832,8 +832,12 @@ struct MenuBarView: View {
     /// quieter "Resets in X" line with the full hit→resume schedule so the
     /// user sees the outage window in context of the meter that's driving
     /// it. Cleaner and larger than the prior global banner.
+    ///
+    /// `showCostEstimate` is true on the Claude side (where we have JSONL
+    /// cost data) and false on the Codex side (where we don't yet).
     @ViewBuilder
-    private func outageStrip(forecast: UsageManager.OutageForecast) -> some View {
+    private func outageStrip(forecast: UsageManager.OutageForecast, showCostEstimate: Bool = true) -> some View {
+        let costToSkip: Double? = showCostEstimate ? estimatedExtraUsageCost(for: forecast) : nil
         HStack(spacing: 6) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 13, weight: .semibold))
@@ -847,6 +851,12 @@ struct MenuBarView: View {
                     .font(.system(size: 10))
                     .foregroundColor(.red.opacity(0.75))
                     .fixedSize(horizontal: false, vertical: true)
+                if let cost = costToSkip, cost >= 0.5 {
+                    Text("Skip with Extra usage: ~\(formatCost(cost)) at your current pace")
+                        .font(.system(size: 10))
+                        .foregroundColor(.red.opacity(0.75))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             Spacer(minLength: 0)
         }
@@ -860,6 +870,29 @@ struct MenuBarView: View {
                         .strokeBorder(Color.red.opacity(0.25), lineWidth: 1)
                 )
         )
+    }
+
+    /// Average API-equivalent $/hour over the current weekly window so far.
+    /// nil when we don't have enough data (less than 1h elapsed in window,
+    /// or zero recorded cost). Conservative — uses cumulative weekly cost
+    /// rather than just the last hour, so a recent burst doesn't dominate.
+    private var estimatedCostPerHour: Double? {
+        guard let weeklyResetsAt = manager.quotas
+                .first(where: { $0.label.contains("Weekly") })?.resetsAt,
+              manager.weekStats.totalCost > 0
+        else { return nil }
+        let weekStart = weeklyResetsAt.addingTimeInterval(-7 * 24 * 3600)
+        let elapsedHours = Date().timeIntervalSince(weekStart) / 3600
+        guard elapsedHours > 1 else { return nil }
+        return manager.weekStats.totalCost / elapsedHours
+    }
+
+    /// Estimated Extra-usage spend required to cover the outage at current pace.
+    /// Returned nil when cost rate is unavailable; the strip then omits the
+    /// "Skip with Extra usage" line.
+    private func estimatedExtraUsageCost(for forecast: UsageManager.OutageForecast) -> Double? {
+        guard let rate = estimatedCostPerHour else { return nil }
+        return rate * (forecast.offlineDuration / 3600)
     }
 
     /// Compact "~Xd Yh / ~Xh Ym / ~Xm" formatter, matching the rest of the app.
@@ -1288,8 +1321,9 @@ struct MenuBarView: View {
                             }
                             .frame(height: 6)
                             // Inline outage info when this Codex window is approaching its limit.
+                            // Cost estimate suppressed here: we don't have Codex JSONL cost data yet.
                             if let forecast = codexManager.allOutageForecasts.first(where: { quota.label.contains($0.window) }) {
-                                outageStrip(forecast: forecast)
+                                outageStrip(forecast: forecast, showCostEstimate: false)
                             } else if let resetsAt = quota.resetsAt {
                                 Text("Resets \(RelativeDateTimeFormatter().localizedString(for: resetsAt, relativeTo: Date()))")
                                     .font(.system(size: 10))
