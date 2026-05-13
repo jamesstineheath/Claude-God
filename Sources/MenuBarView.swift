@@ -716,6 +716,18 @@ struct MenuBarView: View {
         )
     }
 
+    // MARK: - Hard-limit quotas (personal-fork addition)
+    //
+    // Some Anthropic quotas are hard caps that Extra usage explicitly does NOT
+    // cover. As of 2026-05-12 confirmed by user inspection: Claude Design is
+    // one of them — when you hit the Design 7d cap, you wait for the reset
+    // regardless of whether Extra usage is enabled.
+    //
+    // Add window names here as we identify more (Code Review, feature-specific
+    // additional rate limits, etc.). The set drives both the outage-strip's
+    // cost-line suppression and the rule engine's substitution logic.
+    private static let hardLimitWindows: Set<String> = ["Claude Design"]
+
     // MARK: - Recommendations (personal-fork addition)
 
     /// A small, actionable recommendation card surfaced in the usage panel
@@ -738,6 +750,7 @@ struct MenuBarView: View {
         // Pull outages once for the rules below.
         let sessionOutage = manager.allOutageForecasts.first(where: { $0.window == "Session" })
         let weeklyOutage  = manager.allOutageForecasts.first(where: { $0.window == "Weekly" })
+        let designOutage  = manager.allOutageForecasts.first(where: { $0.window == "Claude Design" })
 
         // Rule 1 — Weekly wall coming: defer non-urgent work
         if let outage = weeklyOutage {
@@ -759,7 +772,19 @@ struct MenuBarView: View {
             ))
         }
 
-        // Rule 3 — Opus dominating weekly spend: route routine work to Sonnet
+        // Rule 3 — Claude Design hard-limit wall: distinct framing (no Extra
+        // usage option, no substitute via Codex/Sonnet — it's a separate
+        // surface with its own cap).
+        if let outage = designOutage {
+            recs.append(UsageRecommendation(
+                icon: "paintbrush.fill",
+                title: "Claude Design is approaching its hard limit",
+                body: "Design 7d window will exhaust \(formatAbsoluteTime(outage.hitAt)) and stays offline until \(formatAbsoluteTime(outage.resumesAt)). Extra usage does NOT cover Design — batch any remaining design work before then.",
+                tint: .purple
+            ))
+        }
+
+        // Rule 4 — Opus dominating weekly spend: route routine work to Sonnet
         if let opusQuota = manager.quotas.first(where: { $0.label.contains("Opus") }),
            opusQuota.utilization >= 40 {
             recs.append(UsageRecommendation(
@@ -770,11 +795,16 @@ struct MenuBarView: View {
             ))
         }
 
-        // Rule 4 — Claude approaching, Codex has capacity: cross-provider routing
-        let claudeApproaching = !manager.allOutageForecasts.isEmpty
+        // Rule 5 — Cross-provider routing only applies when a SUBSTITUTABLE
+        // Claude window is approaching. Claude Design is a hard-cap surface
+        // with no Codex equivalent (Codex does coding, not frontend design),
+        // so it shouldn't trigger this recommendation.
+        let claudeApproachingSubstitutable = manager.allOutageForecasts.contains {
+            !Self.hardLimitWindows.contains($0.window)
+        }
         let codexHasData = !codexManager.quotas.isEmpty
         let codexHeadroom = codexManager.quotas.allSatisfy { $0.utilization < 50 }
-        if claudeApproaching && codexHasData && codexHeadroom {
+        if claudeApproachingSubstitutable && codexHasData && codexHeadroom {
             recs.append(UsageRecommendation(
                 icon: "arrow.right.circle",
                 title: "Codex has capacity — consider routing some work there",
@@ -837,7 +867,8 @@ struct MenuBarView: View {
     /// cost data) and false on the Codex side (where we don't yet).
     @ViewBuilder
     private func outageStrip(forecast: UsageManager.OutageForecast, showCostEstimate: Bool = true) -> some View {
-        let costToSkip: Double? = showCostEstimate ? estimatedExtraUsageCost(for: forecast) : nil
+        let isHardLimit = Self.hardLimitWindows.contains(forecast.window)
+        let costToSkip: Double? = (showCostEstimate && !isHardLimit) ? estimatedExtraUsageCost(for: forecast) : nil
         HStack(spacing: 6) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 13, weight: .semibold))
@@ -851,7 +882,12 @@ struct MenuBarView: View {
                     .font(.system(size: 10))
                     .foregroundColor(.red.opacity(0.75))
                     .fixedSize(horizontal: false, vertical: true)
-                if let cost = costToSkip, cost >= 0.5 {
+                if isHardLimit {
+                    Text("Hard limit — Extra usage doesn't cover this window")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.red.opacity(0.75))
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if let cost = costToSkip, cost >= 0.5 {
                     Text("Skip with Extra usage: ~\(formatCost(cost)) at your current pace")
                         .font(.system(size: 10))
                         .foregroundColor(.red.opacity(0.75))
