@@ -712,6 +712,22 @@ struct MenuBarView: View {
         }
     }
 
+    /// Per-model cost breakdown of the current month's API-equivalent spend.
+    /// Shown under the bill block so a high API-equivalent number is
+    /// interpretable — e.g., is it Opus-dominated or balanced?
+    /// Returns nil when monthStats has no per-model data.
+    private var monthSpendBreakdown: String? {
+        let models = manager.monthStats.aggregatedModels.sorted(by: { $0.cost > $1.cost })
+        let total = models.reduce(0) { $0 + $1.cost }
+        guard total > 1 else { return nil }
+        let parts = models.prefix(4).map { m -> String in
+            let pct = Int((m.cost / total) * 100)
+            return "\(m.shortName) \(formatCostCompact(m.cost)) (\(pct)%)"
+        }
+        guard !parts.isEmpty else { return nil }
+        return "Split: " + parts.joined(separator: " · ")
+    }
+
     /// Per-provider subscription price input row used in Settings.
     @ViewBuilder
     private func subscriptionPriceRow(label: String, hint: String?, value: Binding<Double?>) -> some View {
@@ -1316,6 +1332,12 @@ struct MenuBarView: View {
                         Text("API-equivalent total: \(formatCost(forecast.projected)) (what you'd pay without subscription)")
                             .font(.system(size: 10))
                             .foregroundColor(.secondary.opacity(0.7))
+                        if let breakdown = monthSpendBreakdown {
+                            Text(breakdown)
+                                .font(.system(size: 10))
+                                .foregroundColor(.secondary.opacity(0.7))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                 }
                 .padding(.horizontal, 10)
@@ -1346,6 +1368,12 @@ struct MenuBarView: View {
                         .font(.system(size: 9))
                         .foregroundColor(.secondary.opacity(0.7))
                         .fixedSize(horizontal: false, vertical: true)
+                    if let breakdown = monthSpendBreakdown {
+                        Text(breakdown)
+                            .font(.system(size: 9))
+                            .foregroundColor(.secondary.opacity(0.6))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 8)
