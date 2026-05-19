@@ -311,31 +311,93 @@ class AuthManager: ObservableObject {
     // MARK: - Keychain
 
     private static func loadFromKeychain() -> [String: Any]? {
+        // Anthropic recently moved from a single Keychain entry named
+        // "Claude Code-credentials" to per-account sharded entries named
+        // "Claude Code-credentials-<hex>". Try the legacy unsharded service
+        // first (cheap, may still exist for legacy installs), then fall
+        // back to enumerating and reading the sharded entries.
+        if let json = readKeychainServiceAsOauthJSON("Claude Code-credentials") {
+            return json
+        }
+        // Cache the last-known-good sharded service so subsequent launches
+        // skip the enumeration step. UserDefaults is fine — it's a service
+        // name string, not a credential.
+        if let cached = UserDefaults.standard.string(forKey: "auth.shardedService"),
+           let json = readKeychainServiceAsOauthJSON(cached) {
+            return json
+        }
+        for service in enumerateShardedCredentialServices() {
+            if let json = readKeychainServiceAsOauthJSON(service) {
+                UserDefaults.standard.set(service, forKey: "auth.shardedService")
+                Log.info("Auth: found OAuth payload in sharded Keychain service \(service)")
+                return json
+            }
+        }
+        return nil
+    }
+
+    /// Read a generic-password Keychain entry by service name and return its
+    /// parsed JSON body, or nil if the entry is missing/empty/non-JSON or
+    /// doesn't contain a `claudeAiOauth` payload.
+    private static func readKeychainServiceAsOauthJSON(_ service: String) -> [String: Any]? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        process.arguments = ["find-generic-password", "-s", "Claude Code-credentials", "-w"]
-
+        process.arguments = ["find-generic-password", "-s", service, "-w"]
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = Pipe()
-
         do {
             try process.run()
             process.waitUntilExit()
             guard process.terminationStatus == 0 else { return nil }
-
             let rawData = pipe.fileHandleForReading.readDataToEndOfFile()
-            // Trim whitespace from raw output before parsing
             guard let trimmed = String(data: rawData, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines),
+                    .trimmingCharacters(in: .whitespacesAndNewlines),
                   !trimmed.isEmpty,
                   let jsonData = trimmed.data(using: .utf8),
-                  let json = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
+                  let json = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
+                  json["claudeAiOauth"] != nil
             else { return nil }
-
             return json
         } catch {
             return nil
+        }
+    }
+
+    /// Enumerate Keychain service names matching `Claude Code-credentials-<hex>`
+    /// by parsing the metadata-only `security dump-keychain` output (no
+    /// password material is read here — passwords are fetched per-service
+    /// via `readKeychainServiceAsOauthJSON`).
+    private static func enumerateShardedCredentialServices() -> [String] {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        process.arguments = ["dump-keychain"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+        do {
+            try process.run()
+            process.waitUntilExit()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            guard let output = String(data: data, encoding: .utf8) else { return [] }
+            let pattern = #"\"svce\"<blob>=\"(Claude Code-credentials-[0-9a-f]+)\""#
+            guard let regex = try? NSRegularExpression(pattern: pattern) else { return [] }
+            let range = NSRange(output.startIndex..., in: output)
+            var found: [String] = []
+            var seen: Set<String> = []
+            regex.enumerateMatches(in: output, range: range) { match, _, _ in
+                guard let match = match,
+                      match.numberOfRanges >= 2,
+                      let r = Range(match.range(at: 1), in: output) else { return }
+                let svc = String(output[r])
+                if !seen.contains(svc) {
+                    seen.insert(svc)
+                    found.append(svc)
+                }
+            }
+            return found
+        } catch {
+            return []
         }
     }
 }
