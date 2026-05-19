@@ -1,10 +1,10 @@
-// ClaudeUsageApp.swift
+// SubMaxxingApp.swift
 // Point d'entrée — crée l'icône dans la menu bar macOS
 
 import SwiftUI
 
 @main
-struct ClaudeGodApp: App {
+struct SubMaxxingApp: App {
     @StateObject private var manager: UsageManager
 
     init() {

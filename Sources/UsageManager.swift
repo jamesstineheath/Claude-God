@@ -1868,7 +1868,7 @@ class UsageManager: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
-        request.setValue("ClaudeGod", forHTTPHeaderField: "User-Agent")
+        request.setValue("SubMaxxing", forHTTPHeaderField: "User-Agent")
         request.timeoutInterval = 15
 
         Log.info("Fetching usage from OAuth API... (attempt \(retryCount + 1), id: \(activeFetchID.uuidString.prefix(8)))")
@@ -2218,7 +2218,7 @@ class UsageManager: ObservableObject {
         // Send notifications
         toNotify.forEach { pair in
             let content = UNMutableNotificationContent()
-            content.title = "Claude God"
+            content.title = "SubMaxxing"
             content.body = pair.threshold >= Self.emergencyThreshold
                 ? "\(pair.quota.label): \(Int(pair.quota.utilization))% used — almost at limit!"
                 : "\(pair.quota.label): \(Int(pair.quota.utilization))% used"
@@ -2245,7 +2245,7 @@ class UsageManager: ObservableObject {
 
         resetQuotas.forEach { quota in
             let content = UNMutableNotificationContent()
-            content.title = "Claude God"
+            content.title = "SubMaxxing"
             content.body = "\(quota.label) quota reset — you're back to \(Int(quota.utilization))%"
             content.sound = .default
             let request = UNNotificationRequest(identifier: "reset-\(UUID().uuidString)", content: content, trigger: nil)
@@ -2266,7 +2266,7 @@ class UsageManager: ObservableObject {
             guard let quota = quotas.first(where: { $0.label == rule.quotaLabel }) else { continue }
             if quota.utilization >= rule.threshold && !rule.notified {
                 let content = UNMutableNotificationContent()
-                content.title = "Claude God"
+                content.title = "SubMaxxing"
                 content.body = "\(rule.quotaLabel): \(Int(quota.utilization))% used (alert at \(Int(rule.threshold))%)"
                 content.sound = .default
                 let request = UNNotificationRequest(
@@ -2294,7 +2294,7 @@ class UsageManager: ObservableObject {
                 let key = "project-budget-\(project.directoryName)"
                 if !notifiedThresholds.contains(key) {
                     let content = UNMutableNotificationContent()
-                    content.title = "Claude God"
+                    content.title = "SubMaxxing"
                     content.body = "\(project.projectName): monthly budget exceeded ($\(String(format: "%.2f", project.totalCost)) / $\(String(format: "%.0f", budget)))"
                     content.sound = .default
                     let request = UNNotificationRequest(
@@ -2359,7 +2359,7 @@ class UsageManager: ObservableObject {
         guard currentHash != lastWidgetQuotaHash else { return }
         lastWidgetQuotaHash = currentHash
 
-        let defaults = UserDefaults(suiteName: "group.com.lcharvol.claude-god") ?? .standard
+        let defaults = UserDefaults(suiteName: "group.com.sunriselabs.submaxxing") ?? .standard
         let quotaData = quotas.enumerated().map { index, q in
             ["utilization": q.utilization, "labelIndex": Double(index)]
         }
@@ -2397,7 +2397,7 @@ class UsageManager: ObservableObject {
         }
 
         let sections: [[String]] = [
-            ["Claude God — Usage Stats", ""],
+            ["SubMaxxing — Usage Stats", ""],
             quotas.isEmpty ? [] : (
                 ["── Quotas ──"] +
                 quotas.map { "\($0.label): \(Int($0.utilization))% used" } +

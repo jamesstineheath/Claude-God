@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - **Energy consumption** — drastically reduced background CPU activity ([#14](https://github.com/Lcharvol/Claude-God/issues/14)): removed `disableAppNap()` (was blocking macOS's main background-app energy optimization), countdown timer is now adaptive (60s when remaining > 1h, 1s only in the final hour where seconds are visible), active-session check slowed from 15s to 60s, and the 30-day JSONL stats scan is deferred to popover-open instead of running on every auto-refresh tick
-- **Widget never registered** — added the missing `NSExtensionPointIdentifier` in `ClaudeGodWidget.appex/Info.plist` so macOS now recognizes the bundle as a WidgetKit extension and lists it in the widget gallery ([#13](https://github.com/Lcharvol/Claude-God/issues/13))
+- **Widget never registered** — added the missing `NSExtensionPointIdentifier` in `SubMaxxingWidget.appex/Info.plist` so macOS now recognizes the bundle as a WidgetKit extension and lists it in the widget gallery ([#13](https://github.com/Lcharvol/Claude-God/issues/13))
 - **Resizable popover actually works** — replaced the broken `WindowResizer` (its `view.window` guard exited silently before SwiftUI attached the host view, so `.resizable` was never inserted) with a SwiftUI `ResizeHandle`: visible grip just above the bottom toolbar, vertical-resize cursor on hover, drag to grow / shrink the popover
 
 ## [2.21.0] - 2026-05-04
@@ -109,7 +109,7 @@ All notable changes to this project will be documented in this file.
 - Keychain: read credentials off main thread to prevent UI freezes on startup
 
 ### Added
-- "brew upgrade claude-god" copy button in update banner
+- "brew upgrade submaxxing" copy button in update banner
 
 ## [2.18.1] - 2026-03-18
 
@@ -279,7 +279,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Global keyboard shortcut `⌥⌘C` to toggle the popover from anywhere (Carbon hotkey API)
-- Homebrew cask distribution: `brew tap lcharvol/tap && brew install --cask claude-god`
+- Homebrew cask distribution: `brew tap lcharvol/tap && brew install --cask submaxxing`
 
 ## [2.6.0] - 2026-03-11
 

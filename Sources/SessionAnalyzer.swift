@@ -41,9 +41,9 @@ enum UDKey {
 // MARK: - Logging
 
 enum Log {
-    static func info(_ msg: String) { print("[ClaudeGod] \(msg)") }
-    static func warn(_ msg: String) { print("[ClaudeGod] ⚠ \(msg)") }
-    static func error(_ msg: String) { print("[ClaudeGod] ✗ \(msg)") }
+    static func info(_ msg: String) { print("[SubMaxxing] \(msg)") }
+    static func warn(_ msg: String) { print("[SubMaxxing] ⚠ \(msg)") }
+    static func error(_ msg: String) { print("[SubMaxxing] ✗ \(msg)") }
 }
 
 // MARK: - Pricing ($/token)

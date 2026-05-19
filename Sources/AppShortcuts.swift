@@ -12,7 +12,7 @@ struct GetUsageIntent: AppIntent {
         let quotas = await MainActor.run { UsageManager.shared?.quotas ?? [] }
 
         if quotas.isEmpty {
-            return .result(value: "No quota data available. Open Claude God to refresh.")
+            return .result(value: "No quota data available. Open SubMaxxing to refresh.")
         }
 
         let lines = quotas.map { "\($0.label): \(Int($0.utilization))% used" }
@@ -53,7 +53,7 @@ struct RefreshUsageIntent: AppIntent {
 }
 
 @available(macOS 14.0, *)
-struct ClaudeGodShortcuts: AppShortcutsProvider {
+struct SubMaxxingShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: GetUsageIntent(),

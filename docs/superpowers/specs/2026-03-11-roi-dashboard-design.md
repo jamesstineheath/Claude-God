@@ -2,7 +2,7 @@
 
 ## Overview
 
-A new "ROI" tab in Claude God that correlates Claude AI spending with Git productivity. Shows cost per commit, cost per line of code, per-project and per-model efficiency, and 30-day trends.
+A new "ROI" tab in SubMaxxing that correlates Claude AI spending with Git productivity. Shows cost per commit, cost per line of code, per-project and per-model efficiency, and 30-day trends.
 
 ## Decisions
 

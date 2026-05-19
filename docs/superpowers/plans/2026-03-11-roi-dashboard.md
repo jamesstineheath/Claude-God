@@ -136,7 +136,7 @@ enum GitAnalyzer {
     /// Uses --numstat for lines added/deleted and a custom format for structured parsing
     static func commits(in repoPath: String, sinceDaysAgo days: Int = 30) -> [GitCommit] {
         guard let email = userEmail(in: repoPath) else {
-            print("[ClaudeGod] Could not get git email for \(repoPath)")
+            print("[SubMaxxing] Could not get git email for \(repoPath)")
             return []
         }
 
@@ -247,7 +247,7 @@ enum GitAnalyzer {
 
 - [ ] **Step 2: Build to verify it compiles**
 
-Run: `xcodegen generate && xcodebuild -scheme ClaudeGod -configuration Release build 2>&1 | grep -E "error:|BUILD SUCCEEDED|BUILD FAILED"`
+Run: `xcodegen generate && xcodebuild -scheme SubMaxxing -configuration Release build 2>&1 | grep -E "error:|BUILD SUCCEEDED|BUILD FAILED"`
 Expected: BUILD SUCCEEDED
 
 - [ ] **Step 3: Commit**
@@ -422,7 +422,7 @@ private static func computeROI() -> ROIStats {
 
 - [ ] **Step 5: Build to verify compilation**
 
-Run: `xcodegen generate && xcodebuild -scheme ClaudeGod -configuration Release build 2>&1 | grep -E "error:|BUILD SUCCEEDED|BUILD FAILED"`
+Run: `xcodegen generate && xcodebuild -scheme SubMaxxing -configuration Release build 2>&1 | grep -E "error:|BUILD SUCCEEDED|BUILD FAILED"`
 Expected: BUILD SUCCEEDED
 
 - [ ] **Step 6: Commit**
@@ -695,7 +695,7 @@ Note: `modelColor()` already exists in MenuBarView for the Timeline tab — reus
 
 - [ ] **Step 2: Build to verify compilation**
 
-Run: `xcodegen generate && xcodebuild -scheme ClaudeGod -configuration Release build 2>&1 | grep -E "error:|BUILD SUCCEEDED|BUILD FAILED"`
+Run: `xcodegen generate && xcodebuild -scheme SubMaxxing -configuration Release build 2>&1 | grep -E "error:|BUILD SUCCEEDED|BUILD FAILED"`
 Expected: BUILD SUCCEEDED
 
 - [ ] **Step 3: Commit**
@@ -712,13 +712,13 @@ git commit -m "feat: add ROI view with project/model breakdown, sparkline, and t
 - [ ] **Step 1: Full build**
 
 ```bash
-xcodegen generate && xcodebuild -scheme ClaudeGod -configuration Release build
+xcodegen generate && xcodebuild -scheme SubMaxxing -configuration Release build
 ```
 
 - [ ] **Step 2: Copy to Applications and test manually**
 
 ```bash
-cp -R ~/Library/Developer/Xcode/DerivedData/ClaudeGod-*/Build/Products/Release/Claude\ God.app /Applications/
+cp -R ~/Library/Developer/Xcode/DerivedData/SubMaxxing-*/Build/Products/Release/Claude\ God.app /Applications/
 ```
 
 Launch the app, navigate to ROI tab, verify:

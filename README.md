@@ -7,7 +7,7 @@
 </p>
 
 <h1 align="center">
-  Claude God
+  SubMaxxing
 </h1>
 
 <p align="center">
@@ -33,7 +33,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Lcharvol/Claude-God/releases/latest/download/ClaudeGod.dmg"><strong>Download .dmg</strong></a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/Lcharvol/Claude-God/releases/latest/download/SubMaxxing.dmg"><strong>Download .dmg</strong></a> &nbsp;&middot;&nbsp;
   <a href="https://claudegod.app">Website</a> &nbsp;&middot;&nbsp;
   <a href="https://github.com/Lcharvol/Claude-God/releases">Changelog</a>
 </p>
@@ -84,14 +84,14 @@
 
 ```bash
 brew tap lcharvol/tap
-brew install --cask claude-god
+brew install --cask submaxxing
 ```
 
 ### Manual
 
 ```bash
 # 1. Download & install
-open https://github.com/Lcharvol/Claude-God/releases/latest/download/ClaudeGod.dmg
+open https://github.com/Lcharvol/Claude-God/releases/latest/download/SubMaxxing.dmg
 
 # 2. Allow unsigned app (required once)
 xattr -cr /Applications/Claude\ God.app
@@ -140,7 +140,7 @@ See [`Makefile`](Makefile) for all commands: `build`, `run`, `dmg`, `clean`.
 
 ```
 Sources/
-├── ClaudeUsageApp.swift     # Entry point, MenuBarExtra
+├── SubMaxxingApp.swift     # Entry point, MenuBarExtra
 ├── UsageManager.swift       # OAuth, auto-refresh, notifications, budget, active session
 ├── AuthManager.swift        # Credential loading, token refresh, file watcher
 ├── UpdateChecker.swift      # GitHub releases auto-update
@@ -150,7 +150,7 @@ Sources/
 ├── SessionAnalyzer.swift    # JSONL parser, cost calculator, efficiency metrics
 └── Assets.xcassets/         # App icon
 Widget/
-└── ClaudeGodWidget.swift    # WidgetKit — desktop quota gauges
+└── SubMaxxingWidget.swift    # WidgetKit — desktop quota gauges
 ```
 
 **Zero external dependencies.** Foundation + SwiftUI + Combine + Security + UserNotifications + ServiceManagement.

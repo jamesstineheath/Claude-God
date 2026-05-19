@@ -1,13 +1,13 @@
-name: ClaudeGod
+name: SubMaxxing
 options:
-  bundleIdPrefix: com.lcharvol
+  bundleIdPrefix: com.sunriselabs
   deploymentTarget:
     macOS: "13.0"
   xcodeVersion: "15.0"
   createIntermediateGroups: true
 
 targets:
-  ClaudeGod:
+  SubMaxxing:
     type: application
     platform: macOS
     sources:
@@ -23,8 +23,8 @@ targets:
         LSUIElement: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lcharvol.claude-god
-        PRODUCT_NAME: Claude God
+        PRODUCT_BUNDLE_IDENTIFIER: com.sunriselabs.submaxxing
+        PRODUCT_NAME: SubMaxxing
         MARKETING_VERSION: "2.22.0"
         CURRENT_PROJECT_VERSION: "37"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -35,14 +35,14 @@ targets:
         CODE_SIGN_STYLE: Manual
         ENABLE_HARDENED_RUNTIME: true
     entitlements:
-      path: Sources/ClaudeGod.entitlements
+      path: Sources/SubMaxxing.entitlements
       properties:
         com.apple.security.network.client: true
     dependencies:
-      - target: ClaudeGodWidget
+      - target: SubMaxxingWidget
         embed: true
 
-  ClaudeGodWidget:
+  SubMaxxingWidget:
     type: app-extension
     platform: macOS
     sources:
@@ -58,8 +58,8 @@ targets:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.lcharvol.claude-god.widget
-        PRODUCT_NAME: ClaudeGodWidget
+        PRODUCT_BUNDLE_IDENTIFIER: com.sunriselabs.submaxxing.widget
+        PRODUCT_NAME: SubMaxxingWidget
         MARKETING_VERSION: "2.22.0"
         CURRENT_PROJECT_VERSION: "37"
         SWIFT_VERSION: "5.9"

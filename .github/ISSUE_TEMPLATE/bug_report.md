@@ -16,5 +16,5 @@ What you expected to happen.
 
 **Environment**
 - macOS version:
-- Claude God version:
+- SubMaxxing version:
 - Anthropic API tier:

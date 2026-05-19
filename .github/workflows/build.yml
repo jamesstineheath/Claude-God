@@ -28,8 +28,8 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           echo "Building version: $VERSION"
           xcodebuild \
-            -project ClaudeGod.xcodeproj \
-            -scheme ClaudeGod \
+            -project SubMaxxing.xcodeproj \
+            -scheme SubMaxxing \
             -configuration Release \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="-" \
@@ -40,8 +40,8 @@ jobs:
 
       - name: Create DMG
         run: |
-          APP_PATH="build/Build/Products/Release/Claude God.app"
-          DMG_NAME="ClaudeGod.dmg"
+          APP_PATH="build/Build/Products/Release/SubMaxxing.app"
+          DMG_NAME="SubMaxxing.dmg"
 
           # Create a temporary directory for the DMG contents
           mkdir -p dmg-contents
@@ -50,7 +50,7 @@ jobs:
 
           # Create DMG
           hdiutil create \
-            -volname "Claude God" \
+            -volname "SubMaxxing" \
             -srcfolder dmg-contents \
             -ov \
             -format UDZO \
@@ -65,11 +65,11 @@ jobs:
             BODY="See [CHANGELOG.md](https://github.com/Lcharvol/Claude-God/blob/main/CHANGELOG.md) for details."
           fi
           echo "$BODY" > /tmp/release-body.md
-          printf '\n---\n\n## Install\n\n**Homebrew (recommended)**\n```bash\nbrew tap lcharvol/tap\nbrew install --cask claude-god\n```\n\n**Manual** — download `ClaudeGod.dmg` below, drag to Applications, then run:\n```bash\nxattr -cr /Applications/Claude\\ God.app\n```\n' >> /tmp/release-body.md
+          printf '\n---\n\n## Install\n\n**Homebrew (recommended)**\n```bash\nbrew tap lcharvol/tap\nbrew install --cask submaxxing\n```\n\n**Manual** — download `SubMaxxing.dmg` below, drag to Applications, then run:\n```bash\nxattr -cr /Applications/Claude\\ God.app\n```\n' >> /tmp/release-body.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ClaudeGod.dmg
+          files: SubMaxxing.dmg
           body_path: /tmp/release-body.md
           draft: false

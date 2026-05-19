@@ -162,7 +162,7 @@ struct MenuBarView: View {
 
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 5) {
-                    Text("Claude God")
+                    Text("SubMaxxing")
                         .font(.system(size: 13, weight: .semibold))
                     if manager.isSessionActive {
                         Circle()
@@ -274,7 +274,7 @@ struct MenuBarView: View {
             // Brew command copy
             Button {
                 NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString("brew upgrade claude-god", forType: .string)
+                NSPasteboard.general.setString("brew upgrade submaxxing", forType: .string)
                 copiedBrewCommand = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                     copiedBrewCommand = false
@@ -283,7 +283,7 @@ struct MenuBarView: View {
                 HStack(spacing: 6) {
                     Image(systemName: copiedBrewCommand ? "checkmark" : "doc.on.clipboard")
                         .font(.system(size: 10))
-                    Text(copiedBrewCommand ? "Copied!" : "brew upgrade claude-god")
+                    Text(copiedBrewCommand ? "Copied!" : "brew upgrade submaxxing")
                         .font(.system(size: 11, design: .monospaced))
                 }
                 .foregroundColor(copiedBrewCommand ? .green : .secondary)
@@ -665,7 +665,7 @@ struct MenuBarView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     SHLabel("About")
                     HStack(spacing: 8) {
-                        Text("Claude God v\(UpdateChecker.currentVersion)")
+                        Text("SubMaxxing v\(UpdateChecker.currentVersion)")
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                         Spacer()

@@ -302,7 +302,7 @@ class PluginManager: ObservableObject {
 
 - [ ] **Step 7: Build to verify**
 
-Run: `xcodegen generate && xcodebuild -scheme ClaudeGod -configuration Debug build 2>&1 | tail -5`
+Run: `xcodegen generate && xcodebuild -scheme SubMaxxing -configuration Debug build 2>&1 | tail -5`
 Expected: BUILD SUCCEEDED
 
 - [ ] **Step 8: Commit**
@@ -347,7 +347,7 @@ pluginManager.objectWillChange.sink { [weak self] _ in
 
 - [ ] **Step 3: Build to verify**
 
-Run: `xcodebuild -scheme ClaudeGod -configuration Debug build 2>&1 | grep "error:" | head -5`
+Run: `xcodebuild -scheme SubMaxxing -configuration Debug build 2>&1 | grep "error:" | head -5`
 Expected: errors only in MenuBarView.swift (still references `.memory`)
 
 - [ ] **Step 4: Commit**
@@ -447,7 +447,7 @@ Wrap the existing memory content (stats cards, search bar, memory sections) into
 
 - [ ] **Step 6: Build to verify**
 
-Run: `xcodegen generate && xcodebuild -scheme ClaudeGod -configuration Debug build 2>&1 | tail -5`
+Run: `xcodegen generate && xcodebuild -scheme SubMaxxing -configuration Debug build 2>&1 | tail -5`
 Expected: BUILD SUCCEEDED
 
 - [ ] **Step 7: Commit**
@@ -641,7 +641,7 @@ private func categoryChip(_ label: String, isSelected: Bool, action: @escaping (
 
 - [ ] **Step 4: Build and verify**
 
-Run: `xcodegen generate && xcodebuild -scheme ClaudeGod -configuration Debug build 2>&1 | tail -5`
+Run: `xcodegen generate && xcodebuild -scheme SubMaxxing -configuration Debug build 2>&1 | tail -5`
 Expected: BUILD SUCCEEDED
 
 - [ ] **Step 5: Commit**
@@ -759,7 +759,7 @@ private func installedPluginRow(_ plugin: MarketplacePlugin) -> some View {
 
 - [ ] **Step 3: Build and verify**
 
-Run: `xcodegen generate && xcodebuild -scheme ClaudeGod -configuration Debug build 2>&1 | tail -5`
+Run: `xcodegen generate && xcodebuild -scheme SubMaxxing -configuration Debug build 2>&1 | tail -5`
 Expected: BUILD SUCCEEDED
 
 - [ ] **Step 4: Commit**
@@ -815,7 +815,7 @@ Where `memoryContentInner` is the old memory content (stats + search + internal 
 
 - [ ] **Step 3: Build full project**
 
-Run: `xcodegen generate && xcodebuild -scheme ClaudeGod -configuration Debug build 2>&1 | tail -5`
+Run: `xcodegen generate && xcodebuild -scheme SubMaxxing -configuration Debug build 2>&1 | tail -5`
 Expected: BUILD SUCCEEDED
 
 - [ ] **Step 4: Test manually**
